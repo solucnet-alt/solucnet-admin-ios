@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0084ff">
+    <title>SolucNet Admin</title>
+    <!-- 🆕 v2026-06-01: PWA iOS/iPad (Add to Home Screen) -->
+    <link rel="manifest" href="/mobile-admin/manifest.json">
+    <link rel="apple-touch-icon" href="/mobile-admin/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/mobile-admin/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SolucNet Admin">
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- 🟢 v1.0.78: Pixel ping ULTRA TEMPRANO — confirma que app.html empezó a parsearse -->
+    <img src="https://cliente.solucnet.com/api/admin-ping?step=app-html-head&x=v1098-FORCE" style="display:none" alt="">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 🆕 2026-10-05: sistema de diseño (tokens compartidos con técnicos) + tema admin (azul) + componentes -->
+    <link rel="stylesheet" href="css/design-system.css">
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/chat.css?v=1.0.192">
+    <link rel="stylesheet" href="css/admin-theme.css?v=1.0.192">
+    <link rel="stylesheet" href="css/components.css">
+    <script src="js/perms.js"></script>
+</head>
+<body>
+    <!-- 🟢 v1.0.78: Pixel ping de body — confirma que llegó al body de app.html -->
+    <img src="https://cliente.solucnet.com/api/admin-ping?step=app-html-body&x=v1098-FORCE" style="display:none" alt="">
+    <!-- Header -->
+    <header class="app-header">
+        <button class="hamburger-btn" id="btn-drawer" title="Menú" aria-label="Abrir menú">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div style="flex:1; min-width:0;">
+            <h1 style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">SolucNet Admin</h1>
+            <div class="subtitle" id="header-subtitle">Cargando…</div>
+        </div>
+        <div class="app-header-actions">
+            <button class="icon-btn" id="btn-refresh" title="Refrescar">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Drawer lateral -->
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+    <aside class="drawer-panel" id="drawer-panel">
+        <div class="drawer-header">
+            <div class="avatar" id="drawer-avatar">?</div>
+            <div class="name" id="drawer-name">Cargando…</div>
+            <div class="sub" id="drawer-sub"></div>
+        </div>
+        <div class="drawer-items" id="drawer-items">
+            <div class="drawer-item" data-route="chats" data-permiso="enviar_mensajes,ver_historial_chat"><i class="fas fa-comments"></i> Chats</div>
+            <div class="drawer-item" data-route="visitas" data-permiso="ver_visitas"><i class="fas fa-tools"></i> Visitas técnicas</div>
+            <div class="drawer-item" data-route="reportes" data-permiso="ver_reportes,ver_visitas"><i class="fas fa-file-alt"></i> Reportes de visitas</div>
+            <div class="drawer-item" data-route="onus" data-permiso="ver_olt,gestionar_notif_onu"><i class="fas fa-wifi"></i> ONUs pendientes</div>
+            <div class="drawer-item" data-route="clientes" data-permiso="ver_visitas"><i class="fas fa-user-plus"></i> Nuevos clientes</div>
+            <div class="drawer-item" data-route="inventario" data-permiso="ver_inventario"><i class="fas fa-boxes"></i> Inventario</div>
+            <div class="drawer-item" data-route="plantillas" data-permiso="enviar_mensajes"><i class="fas fa-bolt"></i> Plantillas</div>
+            <div class="drawer-item" data-route="correos" data-permiso="ver_correos"><i class="fas fa-envelope"></i> Correos</div>
+            <div class="drawer-item" data-route="verificacion-pagos" data-permiso="ver_verificacion_pagos"><i class="fas fa-file-invoice-dollar"></i> Verificación de pagos</div>
+            <div class="drawer-item" data-route="campanas" data-permiso="gestionar_campanas"><i class="fas fa-bullhorn"></i> Campañas</div>
+            <div class="drawer-item" data-route="cotizaciones" data-permiso="ver_cotizaciones"><i class="fas fa-file-invoice"></i> Cotizaciones</div>
+            <div class="drawer-item" data-route="encuestas" data-permiso="ver_visitas"><i class="fas fa-clipboard-list"></i> Encuestas / PQR</div>
+            <div class="drawer-item" data-route="cobranza" data-permiso="ver_cobranza"><i class="fas fa-hand-holding-dollar"></i> Reportados / Cobranza</div>
+            <div class="drawer-divider" data-grupo="admin"></div>
+            <div class="drawer-item" data-route="usuarios" data-solo-admin data-grupo="admin"><i class="fas fa-user-shield"></i> Gestión de usuarios</div>
+            <div class="drawer-item" data-route="estado" data-grupo="admin" data-solo-admin><i class="fas fa-heartbeat"></i> Estado del bot</div>
+            <div class="drawer-item" data-route="salud" data-grupo="admin" data-solo-admin><i class="fas fa-stethoscope"></i> Salud / Config</div>
+            <div class="drawer-divider" data-grupo="avanzado"></div>
+            <div class="drawer-item" data-route="gestorolt" data-permiso="ver_olt,gestionar_olt" data-grupo="avanzado"><i class="fas fa-server"></i> GestorOLT <span id="drawer-pending-badge" style="display:none; background:#f59e0b; color:white; font-size:0.7em; font-weight:700; padding:2px 7px; border-radius:10px; margin-left:6px;"></span></div>
+            <div class="drawer-item" data-route="finanzas" data-permiso="ver_finanzas" data-grupo="avanzado"><i class="fas fa-dollar-sign"></i> Finanzas</div>
+            <div class="drawer-item" data-route="mapa" data-permiso="ver_mapa_universal" data-grupo="avanzado"><i class="fas fa-map-marked-alt"></i> Mapa Universal</div>
+            <div class="drawer-item" data-route="guardian" data-permiso="ver_isp_guardian,gestionar_mikrotik" data-grupo="avanzado"><i class="fas fa-shield-alt"></i> ISP Guardian</div>
+            <div class="drawer-item" data-route="control-bot" data-solo-admin data-grupo="avanzado"><i class="fas fa-robot"></i> Control del bot</div>
+            <div class="drawer-item" data-route="certificado" data-solo-admin data-grupo="avanzado"><i class="fas fa-lock"></i> Certificado SSL</div>
+            <div class="drawer-divider"></div>
+            <div class="drawer-item" data-route="perfil"><i class="fas fa-user-circle"></i> Perfil</div>
+            <div class="drawer-item" id="drawer-logout-btn"><i class="fas fa-sign-out-alt" style="color:#dc3545;"></i> <span style="color:#dc3545;">Cerrar sesión</span></div>
+        </div>
+        <div class="drawer-footer">SolucNet Admin · v<span id="drawer-version">1.0</span></div>
+    </aside>
+
+    <!-- Main content (SPA pages) -->
+    <main class="app-main">
+        <div id="page-chats" class="page active"></div>
+        <div id="page-onus" class="page"></div>
+        <div id="page-plantillas" class="page"></div>
+        <div id="page-visitas" class="page"></div>
+        <div id="page-perfil" class="page"></div>
+        <div id="page-chat" class="page"></div>
+        <div id="page-mapa" class="page" style="padding:0;"></div>
+    </main>
+
+    <!-- Banner de ONUs pendientes (clickeable + deslizable para silenciar) -->
+    <div id="onu-alert-banner" style="display:none; position:fixed; bottom:16px; left:10px; right:10px; background:linear-gradient(135deg,#f59e0b,#d97706); color:white; padding:10px 14px; border-radius:10px; box-shadow:0 4px 12px rgba(245,158,11,0.4); z-index:200; cursor:pointer; font-size:0.85em; touch-action:pan-y; transition:transform 0.25s ease-out, opacity 0.25s ease-out; will-change:transform;">
+        <span><i class="fas fa-exclamation-triangle"></i> <b><span id="onu-alert-count">0</span></b> ONUs pendientes de autorizar</span>
+        <i class="fas fa-chevron-right" style="float:right; margin-top:3px;"></i>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Scripts -->
+    <!-- 🔍 v1.0.74: Ping ULTRA TEMPRANO antes de cualquier script para confirmar que app.html carga -->
+    <script>
+        try {
+            fetch('https://cliente.solucnet.com/api/admin-app-error', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: '[APP-HTML-CARGO] document inicializado',
+                    route: 'app.html',
+                    userAgent: navigator.userAgent
+                }),
+                keepalive: true
+            }).catch(() => {});
+        } catch {}
+    </script>
+    <!-- 🛡️ v1.0.95: cache-buster bumpado para nueva versión -->
+    <script src="config.js?v=1.0.192"></script>
+    <!-- 🛡️ v2026-06-13: logger remoto para debugging del teclado y otros eventos del WebView.
+         Override console.log/warn/error y envía al server. Eventos relevantes (keyboard,
+         viewport, focus, blur, appStateChange) se etiquetan con tag para filtrar fácil. -->
+    <script>
+        (function () {
+            const DEBUG_LOG_URL = 'https://cliente.solucnet.com/api/admin-debug-log';
+            let buf = [];
+            let flushing = false;
+            const flush = () => {
+                if (flushing || buf.length === 0) return;
+                flushing = true;
+                const batch = buf.splice(0, buf.length);
+                try {
+                    fetch(DEBUG_LOG_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ batch }),
+                        keepalive: true,
+                    }).catch(() => {}).finally(() => { flushing = false; });
+                } catch { flushing = false; }
+            };
+            setInterval(flush, 2000);
+            const orig = { log: console.log, warn: console.warn, error: console.error, info: console.info };
+            const sendOne = (level, args) => {
+                try {
+                    const userId = (window.Auth && Auth.getUser && Auth.getUser()?.id) || '';
+                    // Mandamos un solo evento (no batch — más rápido en debug)
+                    fetch(DEBUG_LOG_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            level, tag: '', userId,
+                            args: args.map(a => {
+                                if (a instanceof Error) return a.stack || a.message;
+                                if (typeof a === 'object') { try { return JSON.parse(JSON.stringify(a)); } catch { return String(a); } }
+                                return String(a);
+                            }),
+                            ts: Date.now(),
+                        }),
+                        keepalive: true,
+                    }).catch(() => {});
+                } catch {}
+            };
+            ['log', 'warn', 'error', 'info'].forEach(level => {
+                console[level] = function (...args) {
+                    try { orig[level].apply(console, args); } catch {}
+                    sendOne(level, args);
+                };
+            });
+            // Marker explícito para que sepamos que el logger arrancó
+            console.log('🟢 [ADMIN-DBG] remote logger ON', { ua: navigator.userAgent, v: '1.0.126' });
+        })();
+    </script>
+    <!-- 🆕 v1.0.69: Captura de errores JS globales para diagnóstico server-side -->
+    <script>
+        (function() {
+            const reportError = (info) => {
+                try {
+                    fetch((window.APP_CONFIG?.SERVER_URL || 'https://cliente.solucnet.com') + '/api/admin-app-error', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            ...info,
+                            route: location.pathname,
+                            userAgent: navigator.userAgent
+                        }),
+                        keepalive: true
+                    }).catch(() => {});
+                } catch {}
+            };
+            window.addEventListener('error', (e) => {
+                reportError({
+                    message: e.message || String(e.error || 'unknown'),
+                    stack: e.error?.stack,
+                    source: e.filename,
+                    line: e.lineno,
+                    col: e.colno
+                });
+            });
+            window.addEventListener('unhandledrejection', (e) => {
+                reportError({
+                    message: 'UnhandledRejection: ' + (e.reason?.message || String(e.reason)),
+                    stack: e.reason?.stack
+                });
+            });
+        })();
+    </script>
+    <script src="js/api.js"></script>
+    <script src="js/offline-store.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/router.js"></script>
+    <script src="js/socket.js"></script>
+    <script src="js/update-checker.js"></script>
+    <script src="js/share-receiver.js"></script>
+    <script src="js/push-notifications.js"></script>
+    <script src="js/urgent-alerts.js"></script>
+    <script src="js/pages/chats.js?v=1.0.192"></script>
+    <script src="js/pages/chat-detail.js?v=1.0.193"></script>
+    <script src="js/pages/onus.js"></script>
+    <script src="js/pages/visitas.js"></script>
+    <script src="js/pages/plantillas.js"></script>
+    <script src="js/pages/perfil.js"></script>
+    <script src="js/pages/reportes.js"></script>
+    <script src="js/pages/clientes.js"></script>
+    <script src="js/pages/inventario.js"></script>
+    <script src="js/pages/usuarios.js"></script>
+    <script src="js/pages/estado.js"></script>
+    <script src="js/pages/gestorolt.js"></script>
+    <script src="js/pages/finanzas.js"></script>
+    <script src="js/pages/fotos.js"></script>
+    <script src="js/pages/correos.js"></script>
+    <script src="js/pages/verificacion-pagos.js"></script>
+    <!-- 🆕 2026-10-05: módulos nuevos (paridad con la web) -->
+    <script src="js/pages/campanas.js"></script>
+    <script src="js/pages/cotizaciones.js"></script>
+    <script src="js/pages/encuestas.js"></script>
+    <script src="js/pages/cobranza.js"></script>
+    <script src="js/pages/salud.js"></script>
+    <script src="js/pages/guardian.js?v=2026-11-14-sininfectados"></script>
+    <script src="js/pages/control-bot.js"></script>
+    <script src="js/pages/certificado.js?v=2026-11-15-aplicar"></script>
+    <!-- Leaflet + MarkerCluster para Mapa Universal nativo (sin iframe) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+    <link rel="stylesheet" href="https://unpkg.com/@geoman-io/leaflet-geoman-free@2.16.0/dist/leaflet-geoman.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@2.16.0/dist/leaflet-geoman.min.js"></script>
+    <script src="js/pages/mapa.js"></script>
+
+    <script>
+        // Stub solo para páginas que aún no tienen handler propio (ninguna ya).
+        // Las páginas reales se registran automáticamente en sus archivos.
+        [].forEach(name => {
+            Router.register(name, (params) => {
+                document.body.classList.remove('in-chat-detail');
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                const page = document.getElementById('page-' + name);
+                if (page) {
+                    page.classList.add('active');
+                    page.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-tools"></i>
+                            <p><b>${name.toUpperCase()}</b></p>
+                            <p style="font-size:0.85em; margin-top:8px;">En construcción — disponible en el próximo update.</p>
+                        </div>
+                    `;
+                }
+            });
+        });
+
+        // Page chats al volverse activa muestra su contenido
+        const originalChatsShow = ChatsPage.show;
+        ChatsPage.show = async function() {
+            document.body.classList.remove('in-chat-detail');
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-chats').classList.add('active');
+            await originalChatsShow();
+        };
+
+        // Setup header (fallback robusto si user.nombre/username/rol están undefined)
+        const user = Auth.getUser();
+        if (user) {
+            const nombre = user.nombre || user.username || 'Usuario';
+            const rol = user.rol ? ' · ' + user.rol : '';
+            document.getElementById('header-subtitle').textContent = nombre + rol;
+        }
+
+        // 🆕 Drawer lateral
+        const drawerOverlay = document.getElementById('drawer-overlay');
+        const drawerPanel = document.getElementById('drawer-panel');
+        // 🆕 Aplicar permisos al drawer: ocultar items según rol y permisos del usuario logueado
+        function aplicarPermisosDrawer() {
+            const rol = (user?.rol || '').toLowerCase();
+            const esAdmin = rol === 'admin';
+            const perms = (typeof Auth !== 'undefined' ? Auth.getPermisos() : {}) || {};
+            document.querySelectorAll('.drawer-item[data-route]').forEach(item => {
+                let visible = true;
+                // 1. Items "solo admin"
+                if (item.hasAttribute('data-solo-admin') && !esAdmin) visible = false;
+                // 2. Items con data-permiso: alcanza con tener cualquiera de la lista (admin siempre pasa)
+                const permKeys = item.dataset.permiso;
+                if (visible && permKeys && !esAdmin) {
+                    const keys = permKeys.split(',').map(s => s.trim()).filter(Boolean);
+                    const tieneAlguno = keys.some(k => perms[k] === true);
+                    if (!tieneAlguno) visible = false;
+                }
+                item.style.display = visible ? '' : 'none';
+            });
+            // Ocultar divisores que quedaron sin items visibles arriba
+            document.querySelectorAll('.drawer-divider[data-grupo]').forEach(div => {
+                const grupo = div.dataset.grupo;
+                const itemsGrupo = document.querySelectorAll(`.drawer-item[data-grupo="${grupo}"]`);
+                const algunoVisible = Array.from(itemsGrupo).some(i => i.style.display !== 'none');
+                div.style.display = algunoVisible ? '' : 'none';
+            });
+        }
+
+        function openDrawer() {
+            drawerOverlay.classList.add('open');
+            drawerPanel.classList.add('open');
+            // Sync header info
+            if (user) {
+                document.getElementById('drawer-avatar').textContent = (user.nombre || user.username || '?').charAt(0).toUpperCase();
+                document.getElementById('drawer-name').textContent = user.nombre || user.username || 'Usuario';
+                document.getElementById('drawer-sub').textContent = user.rol || '';
+            }
+            // 🆕 Aplicar permisos: ocultar items según permisos del usuario
+            aplicarPermisosDrawer();
+            // Marcar item activo
+            const route = Router.current();
+            document.querySelectorAll('.drawer-item[data-route]').forEach(item => {
+                item.classList.toggle('active', item.dataset.route === route);
+            });
+            // Versión
+            (async () => {
+                try {
+                    let v = APP_CONFIG.APP_VERSION;
+                    if (window.Capacitor?.Plugins?.App) {
+                        const info = await window.Capacitor.Plugins.App.getInfo();
+                        if (info?.version) v = info.version;
+                    }
+                    document.getElementById('drawer-version').textContent = v;
+                } catch { document.getElementById('drawer-version').textContent = APP_CONFIG.APP_VERSION; }
+            })();
+        }
+        function closeDrawer() {
+            drawerOverlay.classList.remove('open');
+            drawerPanel.classList.remove('open');
+        }
+        document.getElementById('btn-drawer').addEventListener('click', openDrawer);
+        drawerOverlay.addEventListener('click', closeDrawer);
+        document.querySelectorAll('.drawer-item[data-route]').forEach(item => {
+            item.addEventListener('click', () => {
+                closeDrawer();
+                Router.navigate(item.dataset.route);
+            });
+        });
+        document.getElementById('drawer-logout-btn').addEventListener('click', () => {
+            closeDrawer();
+            if (confirm('¿Cerrar sesión?')) Auth.logout();
+        });
+
+        // Header buttons
+        document.getElementById('btn-refresh').addEventListener('click', () => {
+            const route = Router.current();
+            if (route === 'chats') ChatsPage.loadChats(true);
+            else Router.render();
+        });
+        // Logout también accesible desde el drawer
+
+        // 🆕 Configurar status bar (que NO se solape con la WebView)
+        (async () => {
+            try {
+                if (window.Capacitor?.Plugins?.StatusBar) {
+                    const { StatusBar } = window.Capacitor.Plugins;
+                    await StatusBar.setOverlaysWebView({ overlay: false });
+                    await StatusBar.setBackgroundColor({ color: '#0066cc' });
+                    await StatusBar.setStyle({ style: 'DARK' });
+                }
+            } catch (e) { console.warn('StatusBar setup:', e); }
+        })();
+
+        // Validar sesión y arrancar
+        (async () => {
+            // 🆕 v1.0.70: Telemetría de cada paso para diagnosticar dónde se rompe
+            const _telemetry = (step, detail) => {
+                console.log('[TELEMETRY]', step, detail || '');
+                try {
+                    fetch(APP_CONFIG.SERVER_URL + '/api/admin-app-error', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            message: '[STEP] ' + step + (detail ? ' | ' + detail : ''),
+                            route: 'app.html',
+                            userAgent: navigator.userAgent
+                        }),
+                        keepalive: true
+                    }).catch(() => {});
+                } catch {}
+            };
+            _telemetry('app-html-start');
+
+            // 🔧 v1.0.71: Rehidratar con TIMEOUT — Preferences puede colgar en Android 16
+            try {
+                if (!localStorage.getItem(APP_CONFIG.STORAGE.TOKEN)
+                    && window.Capacitor?.Plugins?.Preferences) {
+                    const withTimeout = (promise, ms, label) => Promise.race([
+                        promise,
+                        new Promise((_, rej) => setTimeout(() => rej(new Error(label + ' timeout')), ms))
+                    ]);
+                    const { Preferences } = window.Capacitor.Plugins;
+                    const tk = await withTimeout(Preferences.get({ key: APP_CONFIG.STORAGE.TOKEN }), 1500, 'app-pref-token');
+                    const us = await withTimeout(Preferences.get({ key: APP_CONFIG.STORAGE.USER }), 1500, 'app-pref-user');
+                    if (tk?.value) {
+                        localStorage.setItem(APP_CONFIG.STORAGE.TOKEN, tk.value);
+                        localStorage.setItem('token', tk.value);
+                        if (us?.value) {
+                            localStorage.setItem(APP_CONFIG.STORAGE.USER, us.value);
+                            localStorage.setItem('user', us.value);
+                        }
+                        _telemetry('rehidratado-desde-preferences');
+                    }
+                }
+            } catch (e) { _telemetry('rehidratar-fail', e.message); }
+
+            const token = API.getToken();
+            if (!token) {
+                _telemetry('no-token-redirigiendo-login');
+                window.location.href = 'login.html';
+                return;
+            }
+            _telemetry('token-ok-len-' + token.length);
+
+            // 🛡️ v1.0.102 (2026-06-06): auto-refresh proactivo del token.
+            // Si al JWT le quedan menos de 7 días para expirar (o ya expiró), pedirle
+            // al server uno fresco vía /api/session/extend. Si el token está completamente
+            // vencido y el extend devuelve 401, ahí sí mando a login. Si renueva: el chat
+            // queda con sesión por 30 días más.
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1] || ''));
+                const expSec = payload?.exp || 0;
+                const nowSec = Math.floor(Date.now() / 1000);
+                const restantes = expSec - nowSec;
+                const UMBRAL_REFRESH = 7 * 24 * 60 * 60; // 7 días
+                _telemetry('token-restantes-dias-' + Math.floor(restantes / 86400));
+                if (restantes < UMBRAL_REFRESH) {
+                    _telemetry('refrescando-token');
+                    const fresh = await fetch(APP_CONFIG.SERVER_URL + '/api/session/extend', {
+                        method: 'GET',
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                    if (fresh.ok) {
+                        const dataFresh = await fresh.json();
+                        if (dataFresh?.token) {
+                            localStorage.setItem(APP_CONFIG.STORAGE.TOKEN, dataFresh.token);
+                            localStorage.setItem('token', dataFresh.token);
+                            try {
+                                if (window.Capacitor?.Plugins?.Preferences) {
+                                    await window.Capacitor.Plugins.Preferences.set({
+                                        key: APP_CONFIG.STORAGE.TOKEN, value: dataFresh.token
+                                    });
+                                }
+                            } catch {}
+                            _telemetry('token-refrescado-ok');
+                        }
+                    } else if (fresh.status === 401) {
+                        _telemetry('token-extend-401-yendo-login');
+                        try {
+                            localStorage.removeItem(APP_CONFIG.STORAGE.TOKEN);
+                            localStorage.removeItem('token');
+                        } catch {}
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                }
+            } catch (e) { _telemetry('token-refresh-fail', e.message); }
+
+            // 🆕 Guard: técnicos no acceden a la app admin
+            const u = Auth.getUser();
+            const rolU = (u?.rol || '').toLowerCase();
+            _telemetry('user-rol', rolU);
+            if (rolU === 'tecnico') {
+                _telemetry('guard-tecnico-logout');
+                alert('Esta app es solo para administradores. Los técnicos deben usar la app SolucNet Técnicos.');
+                Auth.logout();
+                return;
+            }
+            _telemetry('iniciando-router');
+            // 🔧 v1.0.79: Bug crítico arreglado — había DUPLICACIÓN de `const u` y `const rolU`
+            // que rompía el JS del dashboard. El guard ya se ejecuta arriba con los `_telemetry`.
+            // Iniciar el router
+            Router.init();
+
+            // 🛡️ v1.0.91 (2026-06-03): Fix definitivo del bug del "teclado fantasma".
+            // Capacitor Keyboard.resize='none' (ver capacitor.config.json) impide que el
+            // WebView se reduzca cuando el teclado aparece/desaparece. El viewport CSS
+            // entonces es CONSTANTE: 100lvh siempre vale toda la pantalla.
+            // Esta función solo es un seguro extra: si por alguna razón el viewport
+            // reporta una altura menor a screen.availHeight, ignoramos el valor pequeño
+            // y usamos el más grande encontrado. NO bajamos la altura nunca.
+            let _maxHeightSeen = 0;
+            const updateAppHeight = () => {
+                try {
+                    const vv = (window.visualViewport && window.visualViewport.height) || 0;
+                    const inner = window.innerHeight || 0;
+                    const avail = window.screen?.availHeight || 0;
+                    const screenH = window.screen?.height || 0;
+                    // Tomamos el MÁXIMO de TODOS los candidatos — nunca bajamos.
+                    const h = Math.max(vv, inner, avail, screenH);
+                    if (h > _maxHeightSeen) _maxHeightSeen = h;
+                    const finalH = _maxHeightSeen > 200 ? _maxHeightSeen : (avail || screenH || 800);
+                    document.documentElement.style.setProperty('--app-height', finalH + 'px');
+                } catch {}
+            };
+            // Solo resetear el máximo en cambio de orientación (la pantalla sí cambia).
+            window.addEventListener('orientationchange', () => { _maxHeightSeen = 0; });
+            // 🛡️ v2026-06-13: parámetro `cerrarTeclado` añadido. Antes la función SIEMPRE
+            // cerraba el teclado, lo que se notaba feo al volver de minimizar la app: el
+            // teclado quedaba abierto un instante y luego se cerraba. Ahora lo cerramos solo
+            // cuando el caller lo pide (ej. al cambiar de página). En appStateChange
+            // (background→foreground) pasamos false para que respete el teclado igual que
+            // hacen WhatsApp/Gmail/etc.
+            const resetViewport = (cerrarTeclado = true) => {
+                if (cerrarTeclado) {
+                    try { document.activeElement?.blur?.(); } catch {}
+                    try {
+                        if (window.Capacitor?.Plugins?.Keyboard) {
+                            window.Capacitor.Plugins.Keyboard.hide().catch(() => {});
+                        }
+                    } catch {}
+                }
+                // Limpiar style.height inline residual en páginas
+                document.querySelectorAll('.page').forEach(p => { p.style.height = ''; });
+                // Forzar recálculo de viewport en los listeners que usan visualViewport
+                setTimeout(() => {
+                    updateAppHeight();
+                    try { window.dispatchEvent(new Event('resize')); } catch {}
+                }, 50);
+            };
+            // Mantener --app-height al día en cualquier cambio de viewport
+            updateAppHeight();
+            window.addEventListener('resize', updateAppHeight);
+            window.addEventListener('orientationchange', () => setTimeout(updateAppHeight, 100));
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', updateAppHeight);
+            }
+            // Reintentos espaciados para capturar la altura final cuando WebView termina de layout
+            [50, 200, 500, 1200, 2500].forEach(ms => setTimeout(updateAppHeight, ms));
+            // 🛡️ v2026-06-01: listeners del plugin Keyboard de Capacitor — disparan cuando
+            // el teclado realmente se muestra/oculta. Útil para corregir el "teclado fantasma"
+            // inicial: forzamos recálculo en `keyboardDidHide` aunque el sistema crea que
+            // el teclado nunca estuvo abierto.
+            // 🛡️ v2026-06-13: estado del teclado para que el refocus al volver de background
+            // SOLO se aplique si el teclado estaba abierto al minimizar (sino sería molesto).
+            window._keyboardOpen = false;
+            try {
+                if (window.Capacitor?.Plugins?.Keyboard) {
+                    const K = window.Capacitor.Plugins.Keyboard;
+                    K.addListener('keyboardWillShow', (info) => {
+                        console.log('[KB] willShow', { h: info?.keyboardHeight, page: document.querySelector('.page.active')?.id });
+                    });
+                    K.addListener('keyboardDidHide', () => {
+                        window._keyboardOpen = false;
+                        const act = document.activeElement;
+                        console.log('[KB] didHide', { active: act?.tagName, id: act?.id, inChat: document.body.classList.contains('in-chat-detail') });
+                        _maxHeightSeen = 0; // reset para que tome la nueva altura plena
+                        updateAppHeight();
+                        try { document.body.classList.remove('keyboard-open'); } catch {}
+                    });
+                    K.addListener('keyboardWillHide', () => {
+                        console.log('[KB] willHide', { active: document.activeElement?.tagName, id: document.activeElement?.id });
+                    });
+                    K.addListener('keyboardDidShow', (info) => {
+                        window._keyboardOpen = true;
+                        const act = document.activeElement;
+                        console.log('[KB] didShow', { h: info?.keyboardHeight, active: act?.tagName, id: act?.id, vv: window.visualViewport?.height });
+                        updateAppHeight();
+                        try {
+                            document.body.classList.add('keyboard-open');
+                            const kbH = (info && info.keyboardHeight) || 0;
+                            if (kbH > 0) {
+                                document.documentElement.style.setProperty('--kb-height', kbH + 'px');
+                            }
+                        } catch {}
+                    });
+                }
+            } catch (e) { console.warn('[KEYBOARD] addListener error:', e.message); }
+            // Al cambiar estado de la app (background → foreground)
+            // 🛡️ v2026-06-13: guardamos el id del último input enfocado antes de pausar.
+            // El WebView de Android (Chrome 148 / Android 16) saca el focus del input ~200ms
+            // después de que la app vuelve del background → el teclado se cierra solo aunque
+            // visualmente parezca abierto. Lo solucionamos refocaleando el input apenas
+            // detectamos isActive=true.
+            let _lastFocusedInputId = null;
+            try {
+                document.addEventListener('focusin', (e) => {
+                    const el = e.target;
+                    if (!el || !el.id) return;
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable) {
+                        _lastFocusedInputId = el.id;
+                    }
+                }, true);
+                document.addEventListener('focusout', (e) => {
+                    // No reseteamos en focusout porque el blur podría ser disparado por el WebView
+                    // al pausar la app — queremos preservar el último input para refocalear.
+                }, true);
+            } catch {}
+            // 🛡️ v2026-06-13: estado del teclado al pausar — solo refocaleamos si estaba abierto
+            let _wasKeyboardOpenAtPause = false;
+            try {
+                if (window.Capacitor?.Plugins?.App) {
+                    window.Capacitor.Plugins.App.addListener('appStateChange', (state) => {
+                        console.log('[APP] stateChange', { isActive: state?.isActive, active: document.activeElement?.tagName, id: document.activeElement?.id, vv: window.visualViewport?.height, lastFocused: _lastFocusedInputId, kbOpen: window._keyboardOpen });
+                        if (state?.isActive === false) {
+                            _wasKeyboardOpenAtPause = !!window._keyboardOpen;
+                        }
+                        if (state?.isActive) {
+                            _maxHeightSeen = 0; // reset al volver del background
+                            resetViewport(false);
+                            // 🆕 v2026-08: tiempo real "estilo WhatsApp" al volver del background. En móvil el
+                            // socket se cae al pasar a segundo plano; si no lo reconectamos ya, los mensajes que
+                            // llegaron mientras estabas afuera tardan hasta 6s (el poll) en aparecer. Reconectar
+                            // el socket AHORA + refrescar el chat abierto los muestra al instante.
+                            try { if (typeof SocketBus !== 'undefined' && SocketBus.connect) SocketBus.connect(); } catch (e) {}
+                            try { if (Router.current() === 'chat' && typeof ChatDetailPage !== 'undefined' && ChatDetailPage.refresh) ChatDetailPage.refresh(); } catch (e) {}
+                            // 🧹 v2026-07-31: al volver del background, refrescar la lista de chats →
+                            // dispara reconciliarNotificaciones() y quita de la bandeja las notifs de
+                            // clientes que ya se atendieron (desde web u otro dispositivo) mientras la
+                            // app estaba en background. Antes quedaban fijas hasta abrir ese chat.
+                            try { if (typeof ChatsPage !== 'undefined' && ChatsPage.loadChats) ChatsPage.loadChats(); } catch (e) {}
+                            // 🛡️ Refocalear SOLO si el teclado estaba abierto al pausar.
+                            // Si pausó con el teclado cerrado, no abrirlo por nuestra cuenta.
+                            if (_wasKeyboardOpenAtPause) {
+                                const refocus = () => {
+                                    try {
+                                        if (!_lastFocusedInputId) return;
+                                        const el = document.getElementById(_lastFocusedInputId);
+                                        if (el && document.body.contains(el) && document.activeElement !== el) {
+                                            el.focus({ preventScroll: true });
+                                            console.log('[APP] refocus', { id: el.id, ok: document.activeElement === el });
+                                        }
+                                    } catch (e) { console.warn('[APP] refocus error', e.message); }
+                                };
+                                [50, 200, 400, 800].forEach(ms => setTimeout(refocus, ms));
+                            } else {
+                                console.log('[APP] skip refocus — kb estaba cerrado al pausar');
+                            }
+                            setTimeout(() => console.log('[APP] post-resetViewport', { active: document.activeElement?.tagName, id: document.activeElement?.id, vv: window.visualViewport?.height, kbOpen: document.body.classList.contains('keyboard-open') }), 1000);
+                        }
+                    });
+                }
+            } catch (e) { console.warn('[VIEWPORT-RESET] App.addListener error:', e.message); }
+
+            // 🛡️ v2026-06-01: handler global del BOTÓN BACK de Android.
+            // Antes: si tenías una imagen abierta en el lightbox o un modal, apretar back
+            // te sacaba del chat directamente sin cerrar la imagen/modal primero. Ahora la
+            // prioridad es: lightbox → modal → atrás normal → minimizar app.
+            try {
+                if (window.Capacitor?.Plugins?.App) {
+                    window.Capacitor.Plugins.App.addListener('backButton', ({ canGoBack }) => {
+                        // 0) ¿Hay un visor de documento (PDF/Word/Excel) abierto? Cerrarlo y stop —
+                        // antes atrás se saltaba el visor y cerraba el chat directamente.
+                        const docViewer = document.querySelector('.doc-viewer-overlay');
+                        if (docViewer) { try { ChatDetailPage._cerrarVisorDocumento(); } catch { docViewer.remove(); } return; }
+                        // 1) ¿Hay una imagen ampliada abierta? Cerrarla y stop (antes atrás cerraba el chat).
+                        const imgFull = document.querySelector('.img-fullview');
+                        if (imgFull) { imgFull.remove(); return; }
+                        // 1b) ¿Hay un lightbox abierto? Cerrarlo y stop.
+                        const lb = document.querySelector('.lightbox');
+                        if (lb) { lb.remove(); return; }
+                        // 2) ¿Hay algún modal-overlay abierto? Cerrar el último (top).
+                        const modals = document.querySelectorAll('.modal-overlay');
+                        if (modals.length > 0) { modals[modals.length - 1].remove(); return; }
+                        // 3) ¿Estamos en chat-detail? Volver a la lista de chats.
+                        if (typeof Router !== 'undefined' && Router.current && Router.current() === 'chat') {
+                            Router.navigate('chats');
+                            return;
+                        }
+                        // 4) ¿El router puede ir atrás? Hacerlo.
+                        if (canGoBack && typeof Router !== 'undefined' && Router.navigate) {
+                            try { window.history.back(); return; } catch {}
+                        }
+                        // 5) Último recurso: minimizar la app (no cerrar el proceso)
+                        try { window.Capacitor.Plugins.App.minimizeApp?.(); } catch {}
+                    });
+                }
+            } catch (e) { console.warn('[BACK-BUTTON] addListener error:', e.message); }
+            // Al volver visible la pestaña/WebView
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) resetViewport();
+            });
+            // Al cargar inicialmente
+            setTimeout(resetViewport, 100);
+            // Iniciar checker de actualizaciones (consulta /api/admin-app-version)
+            if (typeof UpdateChecker !== 'undefined') UpdateChecker.start();
+            // 🆕 Iniciar Push Notifications FCM (recibir notif con app cerrada)
+            try {
+                if (typeof PushNotifAdmin !== 'undefined' && u?.id) {
+                    PushNotifAdmin.init(u.id);
+                }
+            } catch (e) { console.warn('[PushAdmin] init error:', e.message); }
+            // 🆕 Conectar Socket.IO para mensajes en vivo
+            if (typeof SocketBus !== 'undefined') {
+                SocketBus.connect();
+                // Indicador en el subtitle del header (conectado/desconectado)
+                SocketBus.on('_connection', ({ connected }) => {
+                    const sub = document.getElementById('header-subtitle');
+                    if (!sub) return;
+                    const user = Auth.getUser();
+                    let base = '';
+                    if (user) {
+                        const nombre = user.nombre || user.username || 'Usuario';
+                        const rol = user.rol ? ' · ' + user.rol : '';
+                        base = nombre + rol;
+                    }
+                    sub.innerHTML = base + (connected ? ' <span style="color:#86efac;">●</span>' : ' <span style="color:#ff8080;">●</span>');
+                });
+                // Cuando llega mensaje nuevo, notificar a páginas activas
+                SocketBus.on('new-message', (data) => {
+                    if (!data || !data.chatId) return;
+                    const route = Router.current();
+                    // 🆕 v2026-07-30: SIEMPRE actualizar el estado en memoria de la lista, aunque estés
+                    // dentro de un chat. Así, al volver, el preview y el "pendiente" ya están correctos
+                    // (antes solo se actualizaba si estabas parado en la lista → volvías y veías lo viejo).
+                    if (typeof ChatsPage !== 'undefined' && ChatsPage.onNewMessage) {
+                        ChatsPage.onNewMessage(data);
+                    }
+                    if (route === 'chat' && typeof ChatDetailPage !== 'undefined') {
+                        ChatDetailPage.onNewMessage(data);
+                    }
+                });
+                // Update de chats (re-rendering completo).
+                // 🛡️ v2026-07-31: DEBOUNCE — cada 'chats-update' disparaba loadChats (3 fetches) en cada
+                // mensaje; en ráfaga inundaba el app y la lista se trababa. El update en vivo ya lo hace
+                // onNewMessage (instantáneo); este loadChats es solo reconcile → coalescer a 1 cada 600ms.
+                let _chatsUpdTimer = null;
+                SocketBus.on('chats-update', () => {
+                    if (Router.current() === 'chats' && typeof ChatsPage !== 'undefined') {
+                        clearTimeout(_chatsUpdTimer);
+                        _chatsUpdTimer = setTimeout(() => ChatsPage.loadChats(), 600);
+                    }
+                });
+                // 🛡️ v2026-06-08: edición de mensaje (igual que WhatsApp) — actualizar el body en vivo
+                SocketBus.on('message:edited', (data) => {
+                    if (Router.current() === 'chat' && typeof ChatDetailPage !== 'undefined' && ChatDetailPage.onMessageEdited) {
+                        ChatDetailPage.onMessageEdited(data);
+                    }
+                });
+                // 🆕 ACKs estilo WhatsApp (✓/✓✓/✓✓ azul) — actualizar mensaje en chat abierto
+                SocketBus.on('message_ack_update', (data) => {
+                    if (Router.current() === 'chat' && typeof ChatDetailPage !== 'undefined' && ChatDetailPage.onMessageAckUpdate) {
+                        ChatDetailPage.onMessageAckUpdate(data);
+                    }
+                });
+                // 🆕 v2026-07: cliente "escribiendo…"
+                SocketBus.on('chat:typing', (data) => {
+                    if (Router.current() === 'chat' && typeof ChatDetailPage !== 'undefined' && ChatDetailPage.onTyping) {
+                        ChatDetailPage.onTyping(data);
+                    }
+                });
+                // 🆕 v2026-07: reacción entrante en vivo
+                SocketBus.on('message:reaction', (data) => {
+                    if (Router.current() === 'chat' && typeof ChatDetailPage !== 'undefined' && ChatDetailPage.onReaction) {
+                        ChatDetailPage.onReaction(data);
+                    }
+                });
+            }
+
+            // 🆕 Sistema de alertas para chats urgentes (>20 min sin respuesta)
+            if (typeof UrgentAlerts !== 'undefined') {
+                UrgentAlerts.init();
+                (function startUrgentPoll() {
+                    async function check() {
+                        try {
+                            const data = await API.get('/api/chats');
+                            const arr = data?.chats || (Array.isArray(data) ? data : []);
+                            UrgentAlerts.checkUrgentes(arr);
+                        } catch {}
+                    }
+                    // Primer check después de 5s (dar tiempo a que el socket conecte)
+                    setTimeout(check, 5000);
+                    // Luego cada 45s
+                    setInterval(check, 45000);
+                })();
+                // También chequear ante cualquier socket update de chats (debounced: evita un /api/chats
+                // extra por cada 'chats-update' — el poll de 45s ya cubre el caso general).
+                if (typeof SocketBus !== 'undefined') {
+                    let _urgentUpdTimer = null;
+                    SocketBus.on('chats-update', () => {
+                        clearTimeout(_urgentUpdTimer);
+                        _urgentUpdTimer = setTimeout(async () => {
+                            try {
+                                const data = await API.get('/api/chats');
+                                const arr = data?.chats || (Array.isArray(data) ? data : []);
+                                UrgentAlerts.checkUrgentes(arr);
+                            } catch {}
+                        }, 1500);
+                    });
+                }
+            }
+
+            // 🆕 Polling de ONUs pendientes — alerta global cada 90s
+            // 🛡️ v2026-05-31: banner deslizable para silenciar. Se guarda el conteo en el que
+            // se silenció; si aparece una ONU nueva (count > silenciadoEn), vuelve a mostrarse.
+            (function startOnuPendingPoll() {
+                let lastCount = 0;
+                let firstCheck = true;
+                // Conteo en el que el usuario silenció el banner (persistido en localStorage)
+                function getSilenciado() {
+                    const v = parseInt(localStorage.getItem('onu_banner_silenciado_en') || '-1', 10);
+                    return isNaN(v) ? -1 : v;
+                }
+                function setSilenciado(n) { localStorage.setItem('onu_banner_silenciado_en', String(n)); }
+                function limpiarSilenciado() { localStorage.removeItem('onu_banner_silenciado_en'); }
+
+                // === Setup swipe-to-dismiss en el banner ===
+                const banner = document.getElementById('onu-alert-banner');
+                let startX = 0, startY = 0, currentX = 0, dragging = false, didSwipe = false;
+                const SWIPE_THRESHOLD = 80; // px para considerar silenciado
+
+                function onStart(e) {
+                    const p = e.touches ? e.touches[0] : e;
+                    startX = p.clientX; startY = p.clientY; currentX = 0; dragging = true; didSwipe = false;
+                    banner.style.transition = 'none';
+                }
+                function onMove(e) {
+                    if (!dragging) return;
+                    const p = e.touches ? e.touches[0] : e;
+                    const dx = p.clientX - startX;
+                    const dy = p.clientY - startY;
+                    // Si el movimiento es más vertical que horizontal, cancelar (scroll de página)
+                    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) { dragging = false; return; }
+                    currentX = dx;
+                    banner.style.transform = `translateX(${dx}px)`;
+                    banner.style.opacity = String(Math.max(0.3, 1 - Math.abs(dx) / 300));
+                    if (Math.abs(dx) > 5) didSwipe = true;
+                }
+                function onEnd() {
+                    if (!dragging) return;
+                    dragging = false;
+                    banner.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
+                    if (Math.abs(currentX) >= SWIPE_THRESHOLD) {
+                        // Silenciar: animar fuera de pantalla y ocultar
+                        const direction = currentX > 0 ? 1 : -1;
+                        banner.style.transform = `translateX(${direction * 500}px)`;
+                        banner.style.opacity = '0';
+                        setTimeout(() => {
+                            banner.style.display = 'none';
+                            banner.style.transform = '';
+                            banner.style.opacity = '';
+                            setSilenciado(lastCount);
+                        }, 250);
+                    } else {
+                        // Snap back
+                        banner.style.transform = '';
+                        banner.style.opacity = '';
+                    }
+                }
+                if (banner) {
+                    banner.addEventListener('touchstart', onStart, { passive: true });
+                    banner.addEventListener('touchmove', onMove, { passive: true });
+                    banner.addEventListener('touchend', onEnd);
+                    banner.addEventListener('touchcancel', onEnd);
+                    // Mouse equivalents (para test en desktop)
+                    banner.addEventListener('mousedown', onStart);
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onEnd);
+                    // Click → navegar SOLO si NO hubo swipe
+                    banner.addEventListener('click', (e) => {
+                        if (didSwipe) { e.preventDefault(); e.stopPropagation(); didSwipe = false; return; }
+                        if (window._onuAlertGoto) window._onuAlertGoto();
+                    });
+                }
+
+                async function check() {
+                    try {
+                        const data = await API.get('/gestorolt/api/unified/pending');
+                        const arr = data?.pending || (Array.isArray(data) ? data : []);
+                        const count = arr.length;
+                        const badge = document.getElementById('drawer-pending-badge');
+                        const banner2 = document.getElementById('onu-alert-banner');
+                        const countEl = document.getElementById('onu-alert-count');
+                        if (badge) {
+                            if (count > 0) { badge.style.display = ''; badge.textContent = count; }
+                            else badge.style.display = 'none';
+                        }
+                        // Estado de silencio: silencioEn ≥ 0 significa que el usuario lo silenció
+                        // en ese conteo. Si count = 0, limpiamos el silencio (próxima vez sí muestra).
+                        const silencioEn = getSilenciado();
+                        if (count === 0 && silencioEn >= 0) limpiarSilenciado();
+                        const enGestorolt = Router.current() === 'gestorolt';
+                        // Mostrar banner si:
+                        //   1) hay pendientes
+                        //   2) no estamos en gestorolt
+                        //   3) NO está silenciado para este conteo (count > silencioEn permite reaparición ante ONU nueva)
+                        const mostrar = count > 0 && !enGestorolt && (silencioEn < 0 || count > silencioEn);
+                        if (banner2 && countEl) {
+                            countEl.textContent = count;
+                            banner2.style.display = mostrar ? 'block' : 'none';
+                        }
+                        // Toast cuando aumenta el count (solo si NO está silenciado o si supera el silencio)
+                        if (!firstCheck && count > lastCount && (silencioEn < 0 || count > silencioEn)) {
+                            const t = document.getElementById('toast');
+                            if (t) {
+                                t.className = 'toast show';
+                                t.innerHTML = `🔔 <b>${count - lastCount}</b> nueva${count - lastCount > 1 ? 's' : ''} ONU${count - lastCount > 1 ? 's' : ''} pendiente${count - lastCount > 1 ? 's' : ''} de autorizar`;
+                                t.style.background = '#f59e0b';
+                                setTimeout(() => { t.classList.remove('show'); t.style.background = ''; }, 5000);
+                            }
+                        }
+                        lastCount = count;
+                        firstCheck = false;
+                        window._onuAlertGoto = () => Router.navigate('gestorolt');
+                    } catch {}
+                }
+                check();
+                setInterval(check, 90000);
+            })();
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0084ff">
+    <title>SolucNet Admin</title>
+    <!-- 🆕 v2026-06-01: meta tags PWA para iPhone/iPad (Add to Home Screen) -->
+    <link rel="manifest" href="/mobile-admin/manifest.json">
+    <link rel="apple-touch-icon" href="/mobile-admin/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/mobile-admin/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SolucNet Admin">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="SolucNet Admin">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body {
+            height: 100%;
+            background: linear-gradient(135deg, #0084ff 0%, #0066cc 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+        .splash {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .logo {
+            width: 100px;
+            height: 100px;
+            background: white;
+            border-radius: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .logo i {
+            font-size: 56px;
+            color: #0084ff;
+        }
+        h1 {
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+        }
+        .subtitle {
+            font-size: 0.95em;
+            opacity: 0.85;
+            margin-bottom: 40px;
+        }
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .status {
+            margin-top: 20px;
+            font-size: 0.85em;
+            opacity: 0.7;
+            min-height: 20px;
+        }
+        .version {
+            position: absolute;
+            bottom: 24px;
+            font-size: 0.75em;
+            opacity: 0.6;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="splash">
+        <div class="logo"><i class="fas fa-cog"></i></div>
+        <h1>SolucNet Admin</h1>
+        <div class="subtitle">Panel de gestión</div>
+        <div class="spinner"></div>
+        <div class="status" id="status">Iniciando…</div>
+        <div class="version" id="version-text">v1.0.0</div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="js/update-checker.js"></script>
+    <script>
+        // 🆕 v2026-06-01: registrar Service Worker para PWA (iPhone/iPad necesitan uno
+        // para que "Agregar a inicio" funcione como app nativa). Solo en navegador web
+        // (no en Capacitor) — la app Android nativa no lo necesita.
+        if ('serviceWorker' in navigator && !window.Capacitor) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/mobile-admin/sw-pwa.js', { scope: '/mobile-admin/' })
+                    .then(() => console.log('[PWA] Service Worker registrado'))
+                    .catch(err => console.warn('[PWA] SW registro falló:', err));
+            });
+        }
+    </script>
+    <script>
+        // 🆕 Configurar status bar (que NO se solape con la WebView)
+        (async () => {
+            try {
+                if (window.Capacitor?.Plugins?.StatusBar) {
+                    const { StatusBar } = window.Capacitor.Plugins;
+                    await StatusBar.setOverlaysWebView({ overlay: false });
+                    await StatusBar.setBackgroundColor({ color: '#0066cc' });
+                    await StatusBar.setStyle({ style: 'DARK' });
+                }
+            } catch (e) {}
+        })();
+        // Check update inmediato (no espera al login)
+        setTimeout(() => { if (typeof UpdateChecker !== 'undefined') UpdateChecker.check(); }, 800);
+    </script>
+    <script>
+        const statusEl = document.getElementById('status');
+        document.getElementById('version-text').textContent = 'v' + APP_CONFIG.APP_VERSION;
+
+        // 🚀 v1.0.108: arranque INSTANTÁNEO si hay token en localStorage. La validación
+        // contra el servidor se hace en BACKGROUND, sin bloquear la navegación.
+        // Si el token es inválido, app.html / api.js manejan el redirect a login.
+        // Antes este index hacía 3-6 segundos de "verificando sesión" cada vez que
+        // el usuario volvía a la app → usuario reportó "se reabre como recién la abriera".
+        async function arrancar() {
+            try {
+                // Lectura SÍNCRONA primero — sin esperar Capacitor (es lo más rápido).
+                let token = localStorage.getItem(APP_CONFIG.STORAGE.TOKEN) || localStorage.getItem('token');
+                let user = null;
+                try {
+                    const usStr = localStorage.getItem(APP_CONFIG.STORAGE.USER) || localStorage.getItem('user');
+                    if (usStr) user = JSON.parse(usStr);
+                } catch {}
+
+                if (token) {
+                    // Token encontrado en localStorage → NAVEGAR YA. Validamos en background.
+                    statusEl.textContent = 'Abriendo…';
+                    // Background validate (no await) — si falla, app.html maneja
+                    fetch(APP_CONFIG.SERVER_URL + '/api/validate-token', {
+                        method: 'GET',
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    }).then(async (resp) => {
+                        if (resp.status === 401 || resp.status === 403) {
+                            console.warn('[INDEX] token confirmado inválido por backend');
+                            try {
+                                if (window.Capacitor?.Plugins?.Preferences) {
+                                    await window.Capacitor.Plugins.Preferences.remove({ key: APP_CONFIG.STORAGE.TOKEN });
+                                    await window.Capacitor.Plugins.Preferences.remove({ key: APP_CONFIG.STORAGE.USER });
+                                }
+                                localStorage.removeItem(APP_CONFIG.STORAGE.TOKEN);
+                                localStorage.removeItem('token');
+                            } catch {}
+                        } else if (resp.ok) {
+                            try {
+                                const data = await resp.json();
+                                if (data?.user) {
+                                    localStorage.setItem(APP_CONFIG.STORAGE.USER, JSON.stringify(data.user));
+                                    localStorage.setItem('user', JSON.stringify(data.user));
+                                }
+                            } catch {}
+                        }
+                    }).catch(() => {});
+                    // Ir a app.html con un microdelay para que el setItem termine
+                    window.location.replace('app.html');
+                    return;
+                }
+
+                // No hay token en localStorage — chequear Capacitor.Preferences (puede que sí esté ahí
+                // si el WebView vació localStorage por memoria).
+                if (window.Capacitor?.Plugins?.Preferences) {
+                    const withTimeout = (p, ms, l) => Promise.race([
+                        p, new Promise((_, rej) => setTimeout(() => rej(new Error(l)), ms))
+                    ]);
+                    try {
+                        const { Preferences } = window.Capacitor.Plugins;
+                        const tk = await withTimeout(Preferences.get({ key: APP_CONFIG.STORAGE.TOKEN }), 1500, 'pref-token');
+                        if (tk?.value) {
+                            // Rehidratar localStorage y navegar
+                            localStorage.setItem(APP_CONFIG.STORAGE.TOKEN, tk.value);
+                            localStorage.setItem('token', tk.value);
+                            try {
+                                const us = await withTimeout(Preferences.get({ key: APP_CONFIG.STORAGE.USER }), 1500, 'pref-user');
+                                if (us?.value) {
+                                    localStorage.setItem(APP_CONFIG.STORAGE.USER, us.value);
+                                    localStorage.setItem('user', us.value);
+                                }
+                            } catch {}
+                            window.location.replace('app.html');
+                            return;
+                        }
+                    } catch (e) { console.warn('[INDEX] Preferences timeout:', e.message); }
+                }
+
+                // Sin sesión confirmada → login
+                statusEl.textContent = 'Iniciando sesión…';
+                window.location.replace('login.html');
+            } catch (err) {
+                statusEl.textContent = 'Error: ' + err.message;
+                setTimeout(() => { window.location.replace('login.html'); }, 1500);
+            }
+        }
+
+        // 🚀 v1.0.108: arrancar INMEDIATAMENTE — localStorage es síncrono y no necesita
+        // esperar a Capacitor.Plugins. Antes esperaba 300ms en web → splash visible.
+        arrancar();
+    </script>
+</body>
+</html>

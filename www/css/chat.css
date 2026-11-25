@@ -1,0 +1,918 @@
+/* 🆕 Pantalla de detalle de chat (estilo WhatsApp nativo) */
+
+/* En detalle de chat, ocultar header global (la pantalla tiene su propio header) */
+body.in-chat-detail .app-header { display: none; }
+
+/* === CHAT DETAIL — header propio (flex normal, no fixed) === */
+.chat-detail-header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    padding: calc(10px + var(--safe-top)) 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 100;
+    flex-shrink: 0;
+}
+
+/* 🆕 Layout del chat: el page ocupa el viewport visible (incluso con teclado).
+   La altura real la setea JS via visualViewport para máxima compatibilidad.
+   🛡️ v1.0.100 (2026-06-06): NO usar `inset: 0` — define bottom:0 que sobreescribe
+   el `height` inline aplicado por JS cuando el teclado aparece, lo que hace que el
+   header se salga del viewport visible. Solo fijamos top/left/right; bottom lo
+   determina top + height (controlado por JS via visualViewport.height). */
+body.in-chat-detail #page-chat.active {
+    display: flex !important;
+    flex-direction: column !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: auto !important;
+    height: 100vh; /* fallback, JS lo sobreescribe via visualViewport */
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+}
+html.in-chat-detail,
+body.in-chat-detail {
+    overflow: hidden !important;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overscroll-behavior: none !important;
+}
+/* 🆕 CLAVE: bloquear scroll de app-main mientras estamos en el chat */
+body.in-chat-detail .app-main {
+    overflow: hidden !important;
+    -webkit-overflow-scrolling: auto !important;
+    overscroll-behavior: none !important;
+    padding: 0 !important;
+}
+body.in-chat-detail .bottom-nav { display: none !important; }
+body.in-chat-detail .app-header { display: none !important; }
+
+/* Solo el área de mensajes scrollea, nada más */
+.chat-messages-area {
+    overscroll-behavior: contain !important;
+}
+.chat-back-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2em;
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 50%;
+    transition: background 0.15s;
+}
+.chat-back-btn:active { background: rgba(255,255,255,0.2); }
+
+.chat-detail-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+.chat-detail-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: white;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.chat-detail-text { flex: 1; min-width: 0; }
+.chat-detail-name {
+    font-weight: 600;
+    font-size: 0.98em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.chat-detail-status {
+    font-size: 0.72em;
+    opacity: 0.85;
+    margin-top: 1px;
+}
+
+.chat-detail-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.chat-detail-actions .icon-btn { width: 36px; height: 36px; font-size: 0.95em; }
+
+/* === MENSAJES === */
+.chat-messages-area {
+    flex: 1 1 auto !important;
+    min-height: 0 !important; /* Clave para que el flex shrink funcione en hijos */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain !important;
+    background: #ece5dd url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="%23ece5dd"/></svg>');
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.msg-row {
+    display: flex;
+    margin: 2px 0;
+    animation: msgIn 0.18s ease-out;
+}
+@keyframes msgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.msg-row.incoming { justify-content: flex-start; }
+.msg-row.outgoing { justify-content: flex-end; }
+
+.msg-bubble {
+    max-width: 78%;
+    padding: 6px 10px 6px 10px;
+    border-radius: 8px;
+    word-wrap: break-word;
+    word-break: break-word;
+    font-size: 0.92em;
+    line-height: 1.35;
+    color: #303030;
+    position: relative;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+    cursor: pointer;
+}
+.msg-row.incoming .msg-bubble {
+    background: white;
+    border-top-left-radius: 2px;
+}
+.msg-row.outgoing .msg-bubble {
+    background: #dcf8c6;
+    border-top-right-radius: 2px;
+}
+
+.msg-text { white-space: pre-wrap; }
+.msg-time {
+    font-size: 0.65em;
+    color: #888;
+    margin-top: 4px;
+    text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+}
+.msg-time .msg-status { font-size: 1.1em; }
+
+/* 🆕 v1.0.100 (2026-06-06): badge "quién atendió" en chat móvil */
+.sender-badge {
+    font-size: 0.85em;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 7px;
+    margin-right: 4px;
+    line-height: 1.4;
+    user-select: none;
+    white-space: nowrap;
+}
+.sender-badge.sender-ia      { background: #ede9fe; color: #6d28d9; }
+.sender-badge.sender-asesor  { background: #dbeafe; color: #1e40af; }
+.sender-badge.sender-sistema { background: #f3f4f6; color: #4b5563; }
+.sender-badge.sender-api     { background: #fef3c7; color: #92400e; }
+.msg-time .msg-status.read { color: #4fc3f7; }       /* ✓✓ azul (leído) */
+.msg-time .msg-status.delivered { color: #888; }      /* ✓✓ gris (entregado al cliente) */
+.msg-time .msg-status.sent { color: #888; }           /* ✓ gris (server WhatsApp) */
+.msg-time .msg-status.pending { color: #bbb; }        /* ⏳ pendiente, sin confirmación */
+.msg-time .msg-status.failed {                         /* ❌ no entregado */
+    color: #dc3545;
+    font-size: 1.15em;
+    cursor: help;
+    animation: ackFailedPulse 1.6s ease-in-out infinite;
+}
+@keyframes ackFailedPulse {
+    0%, 100% { opacity: 0.85; }
+    50%      { opacity: 1; transform: scale(1.08); }
+}
+
+/* Quoted message dentro de un mensaje */
+.msg-quoted {
+    background: rgba(0,0,0,0.05);
+    border-left: 3px solid var(--primary);
+    padding: 5px 8px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    font-size: 0.82em;
+    color: #555;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.msg-quoted b { color: var(--primary); display: block; font-size: 0.85em; }
+
+/* Media (imágenes, archivos) */
+.msg-media {
+    /* 🆕 v2026-10-25: media tipo WhatsApp — que NO salga gigante. */
+    max-width: min(280px, 100%);
+    max-height: 360px;
+    object-fit: contain;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    display: block;
+}
+.msg-file {
+    background: rgba(0,0,0,0.05);
+    padding: 8px 12px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    text-decoration: none;
+    color: inherit;
+}
+.msg-file i { font-size: 1.4em; color: var(--text-secondary); }
+
+/* Mensaje seleccionado (long press) */
+.msg-bubble.selected {
+    background: var(--primary-light) !important;
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+/* Separador de fecha */
+.msg-date-separator {
+    text-align: center;
+    margin: 10px 0;
+}
+.msg-date-separator span {
+    background: rgba(255,255,255,0.9);
+    padding: 4px 14px;
+    border-radius: 12px;
+    font-size: 0.72em;
+    color: #555;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+/* === INPUT AREA === */
+.chat-input-bar {
+    background: #f0f0f0;
+    padding: 8px 6px calc(8px + var(--safe-bottom));
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.reply-preview {
+    background: white;
+    border-left: 4px solid var(--primary);
+    padding: 6px 10px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+}
+.reply-preview-text { flex: 1; overflow: hidden; }
+.reply-preview-text b { color: var(--primary); font-size: 0.78em; display: block; }
+.reply-preview-text span { font-size: 0.85em; color: #555; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reply-preview-close {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 4px;
+    font-size: 1em;
+}
+
+.input-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+}
+.input-container .icon-btn {
+    background: white;
+    color: var(--text-secondary);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    width: 42px;
+    height: 42px;
+}
+.input-container .icon-btn:active { background: var(--bg); }
+.chat-textarea {
+    flex: 1;
+    background: white;
+    border: none;
+    outline: none;
+    border-radius: 22px;
+    padding: 11px 16px;
+    font-size: 0.95em;
+    font-family: inherit;
+    resize: none;
+    max-height: 120px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.send-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,132,255,0.3);
+    transition: transform 0.1s, background 0.2s;
+    flex-shrink: 0;
+}
+.send-btn:active { transform: scale(0.92); }
+.send-btn:disabled { background: #ccc; box-shadow: none; }
+.send-btn.recording {
+    background: #dc3545;
+    animation: recPulse 1s ease-in-out infinite;
+    transform: scale(1.15);
+}
+@keyframes recPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(220,53,69,0.6); }
+    50%      { box-shadow: 0 0 0 12px rgba(220,53,69,0); }
+}
+
+/* 🆕 UI de grabación de audio */
+.recording-bar {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 22px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    flex: 1;
+    animation: slideInLeft 0.2s ease-out;
+}
+.recording-bar.active { display: flex; }
+@keyframes slideInLeft { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+.recording-bar .rec-dot {
+    width: 12px;
+    height: 12px;
+    background: #dc3545;
+    border-radius: 50%;
+    animation: recDotBlink 1s ease-in-out infinite;
+}
+@keyframes recDotBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.recording-bar .rec-time {
+    color: #333;
+    font-weight: 600;
+    font-size: 0.95em;
+    font-variant-numeric: tabular-nums;
+}
+.recording-bar .rec-hint {
+    color: var(--text-tertiary);
+    font-size: 0.78em;
+    margin-left: auto;
+}
+/* 🆕 Slide-to-cancel estilo WhatsApp */
+.recording-bar .rec-slide-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-tertiary, #888);
+    font-size: 0.85em;
+    margin-left: auto;
+    margin-right: 4px;
+    user-select: none;
+    pointer-events: none;
+    animation: recSlideHintBlink 1.6s ease-in-out infinite;
+}
+.recording-bar .rec-slide-hint i {
+    font-size: 0.9em;
+}
+@keyframes recSlideHintBlink {
+    0%, 100% { opacity: 0.55; transform: translateX(0); }
+    50%      { opacity: 1; transform: translateX(-6px); }
+}
+.recording-bar.sliding .rec-slide-hint {
+    animation: none;
+    opacity: 1;
+}
+.recording-bar.will-cancel .rec-slide-hint {
+    color: #dc3545;
+    font-weight: 700;
+}
+.recording-bar.will-cancel .rec-slide-hint i {
+    transform: scale(1.3);
+    transition: transform 0.1s;
+}
+.send-btn.recording {
+    transition: transform 0.05s linear, background 0.15s;
+}
+.send-btn.recording.will-cancel {
+    background: #dc3545 !important;
+    color: white !important;
+}
+.recording-cancel-btn {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    padding: 6px 10px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+/* 🆕 Lightbox imagen */
+.lightbox {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.95);
+    z-index: 99990;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s;
+}
+.lightbox img {
+    max-width: 95%;
+    max-height: 90%;
+    border-radius: 8px;
+}
+.lightbox-close {
+    position: absolute;
+    top: calc(env(safe-area-inset-top, 0px) + 16px);
+    right: 16px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 1.2em;
+    cursor: pointer;
+}
+.lightbox-download {
+    position: absolute;
+    top: calc(env(safe-area-inset-top, 0px) + 16px);
+    right: 70px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 1em;
+    cursor: pointer;
+}
+
+/* 🎨 v2026-08-27: nota de voz estilo WhatsApp real (antes: <audio controls> nativo del navegador,
+   una barra fea que no se parecía en nada). Botón circular + forma de onda que se rellena. */
+.msg-audio {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 2px;
+    min-width: 210px;
+}
+.audio-play-btn {
+    flex-shrink: 0;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary, #0084ff);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85em;
+    cursor: pointer;
+}
+.audio-play-btn i.fa-play { margin-left: 2px; } /* centrar visualmente el triángulo */
+.audio-waveform {
+    position: relative;
+    flex: 1;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    overflow: hidden;
+}
+.wf-bar {
+    width: 3px;
+    min-width: 3px;
+    border-radius: 2px;
+    background: rgba(0,0,0,0.22);
+    flex-shrink: 0;
+}
+.wf-progress {
+    position: absolute;
+    left: 0; top: 0;
+    height: 100%;
+    width: 0%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    pointer-events: none;
+}
+.wf-progress .wf-bar { background: var(--primary, #0084ff); }
+.audio-meta {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+}
+.audio-time { font-size: 0.72em; color: #667; min-width: 30px; text-align: right; }
+.audio-speed-btn {
+    border: none;
+    background: rgba(0,0,0,0.08);
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-size: 0.68em;
+    font-weight: 700;
+    color: #444;
+    cursor: pointer;
+}
+
+/* 🆕 v2026-08-27: transcripción bajo demanda de la nota de voz (estilo "Transcribir" de WhatsApp) */
+.audio-transcript { flex-basis: 100%; }
+.audio-transcript-btn {
+    border: none;
+    background: none;
+    color: var(--primary, #0084ff);
+    font-size: 0.78em;
+    font-weight: 600;
+    padding: 3px 2px 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.audio-transcript-loading {
+    font-size: 0.78em;
+    color: #888;
+    padding: 3px 2px 0;
+}
+.audio-transcript-text {
+    font-size: 0.83em;
+    color: #333;
+    padding: 4px 6px;
+    margin-top: 2px;
+    background: rgba(0,0,0,0.045);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary, #0084ff);
+}
+.audio-transcript-error {
+    font-size: 0.78em;
+    color: #ef4444;
+    padding: 3px 2px 0;
+}
+
+/* 🎨 v2026-08-27: miniatura de video estilo WhatsApp — antes era un <video controls> nativo
+   metido en la burbuja. Ahora: miniatura + botón play encima + duración, abre a pantalla
+   completa recién al tocar. */
+.msg-video-thumb {
+    position: relative;
+    max-width: 240px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 4px;
+    cursor: pointer;
+    background: #000;
+    line-height: 0;
+}
+.msg-video-thumb video {
+    width: 100%;
+    max-height: 300px;
+    display: block;
+    pointer-events: none; /* el click lo maneja el wrapper, no el <video> nativo */
+}
+.video-play-overlay {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1em;
+}
+.video-play-overlay i { margin-left: 3px; }
+.video-duration-badge {
+    position: absolute;
+    right: 6px; bottom: 6px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 0.72em;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 8px;
+}
+
+/* === Menú contextual (long press) === */
+.msg-ctx-menu {
+    position: fixed;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    z-index: 999;
+    min-width: 180px;
+    padding: 4px 0;
+    overflow: hidden;
+}
+.msg-ctx-item {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    color: var(--text);
+    transition: background 0.12s;
+    font-size: 0.92em;
+}
+.msg-ctx-item:active { background: var(--primary-light); }
+.msg-ctx-item i { width: 18px; text-align: center; color: var(--text-secondary); }
+.msg-ctx-item.danger { color: var(--danger); }
+.msg-ctx-item.danger i { color: var(--danger); }
+
+/* Backdrop para cerrar menús con tap afuera */
+.ctx-backdrop {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 998;
+    background: transparent;
+}
+
+/* === Emoji react picker === */
+.emoji-picker {
+    position: fixed;
+    background: white;
+    border-radius: 28px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    padding: 8px 12px;
+    z-index: 999;
+    display: flex;
+    gap: 6px;
+}
+.emoji-picker span {
+    font-size: 1.6em;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 50%;
+    transition: transform 0.15s, background 0.15s;
+}
+.emoji-picker span:active { transform: scale(1.3); background: #f0f0f0; }
+
+/* === Reacciones mostradas en mensajes === */
+.msg-reactions {
+    display: inline-flex;
+    gap: 2px;
+    background: white;
+    padding: 1px 6px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    position: absolute;
+    bottom: -8px;
+    right: 8px;
+    font-size: 0.85em;
+}
+
+/* === Modal genérico (reenvío / opciones plantillas) === */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    animation: fadeIn 0.2s;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-content {
+    background: white;
+    width: 100%;
+    max-width: 480px;
+    max-height: 80vh;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.25s;
+    overflow: hidden;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-header {
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+}
+.modal-header h3 { font-size: 1em; font-weight: 600; }
+.modal-body { flex: 1; overflow-y: auto; padding: 8px 0; }
+.modal-footer {
+    padding: 12px 16px calc(12px + var(--safe-bottom));
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+.btn-primary:disabled { background: #ccc; }
+.btn-secondary {
+    background: var(--bg);
+    color: var(--text-secondary);
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.forward-chat-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+}
+.forward-chat-item:active { background: var(--primary-light); }
+.forward-chat-item input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; }
+.forward-chat-item-info { flex: 1; min-width: 0; }
+.forward-chat-item-name { font-weight: 600; font-size: 0.92em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.forward-chat-item-num { font-size: 0.78em; color: var(--text-tertiary); }
+
+/* === 🆕 Editor de imagen estilo WhatsApp (recortar/rotar, dibujar, texto, stickers) === */
+.img-ed-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: calc(10px + var(--safe-top)) 10px 10px; flex-shrink: 0;
+}
+.img-ed-tools { display: flex; align-items: center; gap: 4px; }
+.img-ed-iconbtn {
+    width: 40px; height: 40px; border-radius: 50%; border: none; background: transparent;
+    color: #fff; font-size: 1.05em; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.15s;
+}
+.img-ed-iconbtn:active { background: rgba(255,255,255,0.15); }
+.img-ed-iconbtn.active { background: rgba(255,255,255,0.22); }
+.img-ed-done {
+    width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--primary, #0084ff);
+    color: #fff; font-size: 1.05em; display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.img-ed-canvas-wrap { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+.img-ed-bottombar {
+    padding: 10px 14px calc(14px + var(--safe-bottom)); flex-shrink: 0;
+    display: flex; flex-direction: column; gap: 10px; align-items: center;
+}
+.img-ed-swatches { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.img-ed-swatch {
+    width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.35);
+}
+.img-ed-swatch.active { border-color: #fff; transform: scale(1.15); }
+.img-ed-sizes { display: flex; gap: 16px; align-items: center; }
+.img-ed-size-dot {
+    background: #fff; border-radius: 50%; cursor: pointer; opacity: 0.45; transition: opacity 0.15s;
+    display: flex; align-items: center; justify-content: center;
+}
+.img-ed-size-dot.active { opacity: 1; box-shadow: 0 0 0 2px rgba(255,255,255,0.5); }
+.img-ed-eraser-toggle.active { background: rgba(255,255,255,0.22); }
+.img-ed-crop-mask { position: absolute; background: rgba(0,0,0,0.55); pointer-events: none; }
+.img-ed-crop-rect { position: absolute; border: 2px solid #fff; box-sizing: border-box; touch-action: none; }
+.img-ed-crop-handle {
+    position: absolute; width: 22px; height: 22px; margin: -11px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.4); touch-action: none;
+}
+.img-ed-crop-actions { display: flex; gap: 12px; align-items: center; justify-content: center; }
+.img-ed-pill-btn {
+    border: none; background: rgba(255,255,255,0.15); color: #fff; border-radius: 20px;
+    padding: 9px 18px; font-weight: 600; font-size: 0.88em; cursor: pointer; display: flex; align-items: center; gap: 6px;
+}
+.img-ed-pill-btn.primary { background: var(--primary, #0084ff); }
+.img-ed-floating {
+    position: absolute; touch-action: none; user-select: none; cursor: move;
+    display: flex; align-items: center; justify-content: center;
+}
+.img-ed-floating-text {
+    min-width: 24px; font-size: 28px; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    outline: none; background: transparent; border: 1px dashed rgba(255,255,255,0.6); padding: 2px 6px;
+    white-space: pre; border-radius: 4px;
+}
+.img-ed-floating-sticker { font-size: 56px; line-height: 1; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4)); }
+.img-ed-floating-del {
+    position: absolute; top: -14px; right: -14px; width: 26px; height: 26px; border-radius: 50%;
+    background: #e03131; color: #fff; border: 2px solid #fff; font-size: 0.75em; display: flex;
+    align-items: center; justify-content: center; cursor: pointer;
+}
+.img-ed-sticker-grid {
+    display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; max-height: 32vh; overflow-y: auto;
+    padding: 6px 4px;
+}
+.img-ed-sticker-grid span { font-size: 1.7em; padding: 5px; cursor: pointer; border-radius: 8px; }
+
+/* 🆕 v2026-08-27: Visor de documentos in-app (PDF / Word / Excel) — antes se mandaban SIEMPRE
+   a una app externa; los tipos soportados ahora se ven dentro de la app, como WhatsApp. */
+.doc-viewer-overlay {
+    position: fixed; inset: 0; z-index: 20000; background: #f0f2f5;
+    display: flex; flex-direction: column;
+}
+.doc-viewer-topbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: calc(10px + var(--safe-top, 0px)) 12px 10px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff; flex-shrink: 0;
+}
+.doc-viewer-topbar button {
+    background: rgba(255,255,255,0.15); border: none; color: #fff; width: 34px; height: 34px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
+}
+.doc-viewer-title { flex: 1; font-size: 0.92em; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-viewer-body { flex: 1; min-height: 0; overflow-y: auto; padding: 10px; }
+.doc-viewer-loading, .doc-viewer-error {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; padding: 60px 20px; color: #667; text-align: center; font-size: 0.9em;
+}
+.doc-viewer-error i { font-size: 2em; color: #f59e0b; }
+.doc-viewer-pdf { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.doc-viewer-pdf canvas { max-width: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.15); background: #fff; }
+.doc-viewer-word {
+    background: #fff; border-radius: 10px; padding: 20px; max-width: 700px; margin: 0 auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-size: 0.92em; line-height: 1.5; overflow-x: auto;
+}
+.doc-viewer-word img { max-width: 100%; }
+.doc-viewer-excel-tabs {
+    display: flex; gap: 6px; overflow-x: auto; margin-bottom: 10px; padding-bottom: 4px;
+}
+.doc-viewer-excel-tab {
+    border: 1px solid var(--border); background: #fff; border-radius: 16px; padding: 6px 14px;
+    font-size: 0.82em; font-weight: 600; cursor: pointer; white-space: nowrap; flex-shrink: 0; color: #667;
+}
+.doc-viewer-excel-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.doc-viewer-excel-sheet {
+    background: #fff; border-radius: 10px; padding: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow-x: auto;
+}
+.doc-viewer-excel-sheet table { border-collapse: collapse; font-size: 0.8em; }
+.doc-viewer-excel-sheet td, .doc-viewer-excel-sheet th {
+    border: 1px solid #e5e7eb; padding: 4px 8px; white-space: nowrap;
+}
+
+/* 🆕 v2026-08-28: Galería "Multimedia del chat" — fotos/videos/documentos de ESA conversación,
+   como "Multimedia, enlaces y documentos" de WhatsApp real. */
+.media-gallery-tabs {
+    display: flex; border-bottom: 1px solid var(--border); padding: 0 12px; flex-shrink: 0;
+}
+.media-gallery-tab {
+    flex: 1; border: none; background: none; padding: 10px 4px; font-size: 0.85em; font-weight: 600;
+    color: #667; cursor: pointer; border-bottom: 2px solid transparent;
+}
+.media-gallery-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+.media-gallery-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+}
+.media-gallery-thumb {
+    position: relative; aspect-ratio: 1; border-radius: 6px; overflow: hidden; background: #eee; cursor: pointer;
+}
+.media-gallery-thumb img, .media-gallery-thumb video {
+    width: 100%; height: 100%; object-fit: cover; pointer-events: none;
+}
+.media-gallery-play {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    color: #fff; font-size: 1.4em; text-shadow: 0 1px 4px rgba(0,0,0,0.6); pointer-events: none;
+}
+.img-ed-sticker-grid span:active { background: rgba(255,255,255,0.15); }
+
+/* ═══ 🆕 v2026-10-25 MODO OSCURO DEL CHAT (tipo WhatsApp), alineado al tema oscuro del app ═══
+   El app ya tiene tema oscuro (admin-theme.css) pero el chat quedaba claro. Esto lo empareja. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .chat-messages-area { background: #0b141a; }
+  :root:not([data-theme="light"]) .msg-bubble { color: #e9edef; box-shadow: 0 1px 1px rgba(0,0,0,0.25); }
+  :root:not([data-theme="light"]) .msg-row.incoming .msg-bubble { background: #202c33; }
+  :root:not([data-theme="light"]) .msg-row.outgoing .msg-bubble { background: #005c4b; }
+  :root:not([data-theme="light"]) .msg-time { color: #8696a0; }
+  :root:not([data-theme="light"]) .chat-input-bar { background: #1f2c33; }
+  :root:not([data-theme="light"]) .chat-textarea { background: #2a3942; color: #e9edef; }
+  :root:not([data-theme="light"]) .input-container .icon-btn { background: #2a3942; color: #e9edef; }
+  :root:not([data-theme="light"]) .reply-preview { background: #1f2c33; }
+  :root:not([data-theme="light"]) .reply-preview-text span { color: #aebac1; }
+  :root:not([data-theme="light"]) .msg-date-separator span { background: #1d282f; color: #aebac1; }
+}
+:root[data-theme="dark"] .chat-messages-area { background: #0b141a; }
+:root[data-theme="dark"] .msg-bubble { color: #e9edef; box-shadow: 0 1px 1px rgba(0,0,0,0.25); }
+:root[data-theme="dark"] .msg-row.incoming .msg-bubble { background: #202c33; }
+:root[data-theme="dark"] .msg-row.outgoing .msg-bubble { background: #005c4b; }
+:root[data-theme="dark"] .msg-time { color: #8696a0; }
+:root[data-theme="dark"] .chat-input-bar { background: #1f2c33; }
+:root[data-theme="dark"] .chat-textarea { background: #2a3942; color: #e9edef; }
+:root[data-theme="dark"] .input-container .icon-btn { background: #2a3942; color: #e9edef; }
+:root[data-theme="dark"] .reply-preview { background: #1f2c33; }
+:root[data-theme="dark"] .reply-preview-text span { color: #aebac1; }
+:root[data-theme="dark"] .msg-date-separator span { background: #1d282f; color: #aebac1; }

@@ -1,0 +1,169 @@
+/* ============================================================
+   SOLUCNET TÉCNICOS — Sistema de Diseño v1
+   Tokens base (colores, tipografía, espaciados, sombras, motion)
+   Material 3 inspirado · paleta verde corporativa
+   ============================================================
+   ⚠️ Solo define variables CSS y reset mínimo.
+   No cambia la apariencia hasta que se aplique en theme-modern.css
+   ============================================================ */
+
+:root {
+    /* ---------- Paleta primaria (verde corporativo) ---------- */
+    --sn-green-50:  #ecfdf5;
+    --sn-green-100: #d1fae5;
+    --sn-green-200: #a7f3d0;
+    --sn-green-300: #6ee7b7;
+    --sn-green-400: #34d399;
+    --sn-green-500: #28a745;  /* primario clásico */
+    --sn-green-600: #16a34a;
+    --sn-green-700: #15803d;
+    --sn-green-800: #166534;
+    --sn-green-900: #14532d;
+
+    /* Verde-cian complementario (para gradientes y acentos) */
+    --sn-teal-400: #2dd4bf;
+    --sn-teal-500: #20c997;
+    --sn-teal-600: #0d9488;
+
+    /* ---------- Colores semánticos ---------- */
+    --sn-primary:        var(--sn-green-500);
+    --sn-primary-hover:  var(--sn-green-600);
+    --sn-primary-active: var(--sn-green-700);
+    --sn-on-primary:     #ffffff;
+
+    --sn-success: #22c55e;
+    --sn-info:    #0ea5e9;
+    --sn-warning: #f59e0b;
+    --sn-danger:  #ef4444;
+    --sn-urgent:  #ff4757;
+
+    /* ---------- Superficies (modo claro) ---------- */
+    --sn-surface:       #ffffff;
+    --sn-surface-1:     #f9fafb;   /* fondo de página */
+    --sn-surface-2:     #f3f4f6;   /* cards alternas */
+    --sn-surface-3:     #e5e7eb;   /* dividers */
+    --sn-surface-tint:  rgba(40, 167, 69, 0.04); /* hover suave */
+
+    /* ---------- Texto ---------- */
+    --sn-text-primary:   #111827;
+    --sn-text-secondary: #4b5563;
+    --sn-text-tertiary:  #9ca3af;
+    --sn-text-on-color:  #ffffff;
+
+    /* ---------- Bordes ---------- */
+    --sn-border:       #e5e7eb;
+    --sn-border-soft:  #f3f4f6;
+    --sn-border-strong:#d1d5db;
+    --sn-border-focus: var(--sn-green-500);
+
+    /* ---------- Estados visita (semáforo) ---------- */
+    --sn-state-asignada-bg:  #dbeafe;
+    --sn-state-asignada-fg:  #1e40af;
+    --sn-state-progreso-bg:  #fed7aa;
+    --sn-state-progreso-fg:  #c2410c;
+    --sn-state-completa-bg:  var(--sn-green-100);
+    --sn-state-completa-fg:  var(--sn-green-800);
+    --sn-state-pendiente-bg: #fef3c7;
+    --sn-state-pendiente-fg: #92400e;
+
+    /* ---------- Tipografía ---------- */
+    --sn-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --sn-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+    /* Escala tipográfica (Major Third × 1.250) */
+    --sn-text-xs:   0.75rem;   /* 12px - micro labels */
+    --sn-text-sm:   0.875rem;  /* 14px - texto secundario */
+    --sn-text-base: 1rem;      /* 16px - cuerpo */
+    --sn-text-md:   1.125rem;  /* 18px - subtítulos */
+    --sn-text-lg:   1.25rem;   /* 20px - títulos card */
+    --sn-text-xl:   1.5rem;    /* 24px - títulos página */
+    --sn-text-2xl:  1.875rem;  /* 30px - hero */
+
+    --sn-leading-tight: 1.25;
+    --sn-leading-snug:  1.375;
+    --sn-leading-normal:1.5;
+    --sn-leading-relaxed:1.625;
+
+    --sn-weight-regular: 400;
+    --sn-weight-medium:  500;
+    --sn-weight-semibold:600;
+    --sn-weight-bold:    700;
+
+    /* ---------- Espaciado (escala de 4px) ---------- */
+    --sn-space-0:  0;
+    --sn-space-1:  4px;
+    --sn-space-2:  8px;
+    --sn-space-3:  12px;
+    --sn-space-4:  16px;
+    --sn-space-5:  20px;
+    --sn-space-6:  24px;
+    --sn-space-8:  32px;
+    --sn-space-10: 40px;
+    --sn-space-12: 48px;
+    --sn-space-16: 64px;
+
+    /* ---------- Radios ---------- */
+    --sn-radius-sm:   6px;
+    --sn-radius-md:   10px;
+    --sn-radius-lg:   14px;
+    --sn-radius-xl:   20px;
+    --sn-radius-2xl:  28px;
+    --sn-radius-full: 9999px;
+
+    /* ---------- Sombras (elevación Material) ---------- */
+    --sn-elev-0: none;
+    --sn-elev-1: 0 1px 2px rgba(15, 23, 42, 0.05),
+                 0 1px 3px rgba(15, 23, 42, 0.06);
+    --sn-elev-2: 0 2px 4px rgba(15, 23, 42, 0.05),
+                 0 4px 8px rgba(15, 23, 42, 0.08);
+    --sn-elev-3: 0 4px 8px rgba(15, 23, 42, 0.06),
+                 0 8px 16px rgba(15, 23, 42, 0.10);
+    --sn-elev-4: 0 8px 16px rgba(15, 23, 42, 0.08),
+                 0 16px 32px rgba(15, 23, 42, 0.12);
+    --sn-elev-primary: 0 4px 14px rgba(40, 167, 69, 0.25);
+    --sn-elev-danger:  0 4px 14px rgba(239, 68, 68, 0.25);
+
+    /* ---------- Motion ---------- */
+    --sn-easing-standard:    cubic-bezier(0.2, 0, 0, 1);
+    --sn-easing-emphasized:  cubic-bezier(0.3, 0, 0, 1);
+    --sn-easing-decelerated: cubic-bezier(0, 0, 0, 1);
+
+    --sn-duration-fast:   120ms;
+    --sn-duration-normal: 200ms;
+    --sn-duration-slow:   320ms;
+
+    /* ---------- Gradientes corporativos ---------- */
+    --sn-grad-primary: linear-gradient(135deg, var(--sn-green-500) 0%, var(--sn-teal-500) 100%);
+    --sn-grad-success: linear-gradient(135deg, var(--sn-green-400) 0%, var(--sn-teal-400) 100%);
+    --sn-grad-info:    linear-gradient(135deg, #0ea5e9 0%, var(--sn-teal-500) 100%);
+    --sn-grad-urgent:  linear-gradient(135deg, var(--sn-urgent) 0%, var(--sn-warning) 100%);
+
+    /* ---------- Z-index escala ---------- */
+    --sn-z-dropdown: 1000;
+    --sn-z-sticky:   1020;
+    --sn-z-banner:   1040;
+    --sn-z-modal:    1050;
+    --sn-z-popover:  1060;
+    --sn-z-toast:    1080;
+
+    /* ---------- Touch target mínimo ---------- */
+    --sn-touch-min: 44px;
+}
+
+/* ============================================================
+   Reset suave (solo lo que falta a Bootstrap)
+   ============================================================ */
+* {
+    -webkit-tap-highlight-color: rgba(40, 167, 69, 0.15);
+}
+
+button, [role="button"] {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Mejora del focus para accesibilidad */
+:focus-visible {
+    outline: 2px solid var(--sn-border-focus);
+    outline-offset: 2px;
+}

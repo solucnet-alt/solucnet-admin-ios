@@ -1,0 +1,142 @@
+/* ============================================================
+   SOLUCNET ADMIN — Tema sobre tokens (design-system.css)
+   2026-10-05. Marca = AZUL (decisión de producto). Reusa los
+   tokens de técnicos pero mapeados a las clases PROPIAS del admin
+   (no Bootstrap). Carga DESPUÉS de app.css/chat.css para ganar.
+   ============================================================ */
+
+:root {
+  /* Alias de marca (azul admin) — cambiar acá cambia todo */
+  --brand:        #0084ff;
+  --brand-dark:   #0066cc;
+  --brand-grad:   linear-gradient(135deg, #0084ff 0%, #0066cc 100%);
+  --brand-tint:   rgba(0, 132, 255, 0.08);
+  --brand-100:    #dbeafe;
+  --brand-800:    #1e40af;
+  /* El "focus" del sistema pasa a azul en el admin */
+  --sn-border-focus: var(--brand);
+  --sn-surface-tint: var(--brand-tint);
+}
+
+/* ---------- Shell: header / drawer / fab con la marca ---------- */
+.app-header,
+.drawer-header,
+.chat-detail-header {
+  background: var(--brand-grad) !important;
+}
+.app-header h1 {
+  font-size: var(--sn-text-lg);
+  font-weight: var(--sn-weight-bold);
+  letter-spacing: .2px;
+}
+.app-header .subtitle { font-size: var(--sn-text-xs); opacity: .92; }
+
+.fab {
+  background: var(--brand-grad) !important;
+  box-shadow: 0 6px 18px rgba(0, 132, 255, 0.35) !important;
+  min-width: var(--sn-touch-min);
+  min-height: var(--sn-touch-min);
+}
+.drawer-header .avatar,
+.chat-avatar {
+  background: var(--brand-grad) !important;
+  color: #fff !important;
+}
+
+/* ---------- Página / superficies ---------- */
+.app-main, .page { background: var(--sn-surface-1); }
+
+/* ---------- Drawer ---------- */
+.drawer-item {
+  border-radius: var(--sn-radius-md);
+  margin: 2px 8px;
+  min-height: var(--sn-touch-min);
+  transition: background var(--sn-duration-fast) var(--sn-easing-standard);
+}
+.drawer-item.active,
+.drawer-item:active {
+  background: var(--brand-tint) !important;
+  color: var(--brand-dark) !important;
+  box-shadow: inset 3px 0 0 var(--brand);
+}
+.drawer-footer { color: var(--sn-text-tertiary); font-size: var(--sn-text-xs); }
+
+/* ---------- Chats (lista) ---------- */
+.chat-item {
+  border-radius: var(--sn-radius-lg);
+  box-shadow: var(--sn-elev-1);
+  border: 1px solid var(--sn-border-soft);
+}
+.chat-item.active, .chat-item:active { background: var(--brand-tint); }
+
+/* ---------- Tabs / filtros ---------- */
+.tab-btn {
+  border-radius: var(--sn-radius-full);
+  min-height: 36px;
+  font-size: var(--sn-text-sm);
+  font-weight: var(--sn-weight-semibold);
+}
+.tab-btn.active {
+  background: var(--brand) !important;
+  border-color: var(--brand) !important;
+  color: #fff !important;
+}
+
+/* ---------- Buscador ---------- */
+.search-bar, .search-bar input {
+  border-radius: var(--sn-radius-full);
+}
+.search-bar { border: 1.5px solid var(--sn-border); background: var(--sn-surface); }
+.search-bar:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-tint); }
+
+/* ---------- Toast ---------- */
+.toast { border-radius: var(--sn-radius-full); box-shadow: var(--sn-elev-3); }
+
+/* ---------- Botones de icono del header ---------- */
+.icon-btn, .hamburger-btn { min-width: var(--sn-touch-min); min-height: var(--sn-touch-min); }
+
+/* ---------- Accesibilidad ---------- */
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* ---------- Inputs (ergonomía táctil) ---------- */
+input:not([type="checkbox"]):not([type="radio"]),
+select, textarea {
+  min-height: var(--sn-touch-min);
+  border-radius: var(--sn-radius-md);
+}
+
+/* ============================================================
+   MODO OSCURO (claro por defecto; auto por SO salvo override
+   explícito [data-theme="light"]; y forzado con [data-theme="dark"]).
+   Nota: se completa a medida que las páginas migran a tokens; hoy
+   cubre el shell y todo lo que use variables --sn-*.
+   ============================================================ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sn-surface:       #0f172a;
+    --sn-surface-1:     #0b1220;
+    --sn-surface-2:     #1e293b;
+    --sn-surface-3:     #334155;
+    --sn-text-primary:   #e5e7eb;
+    --sn-text-secondary: #94a3b8;
+    --sn-text-tertiary:  #64748b;
+    --sn-border:        #334155;
+    --sn-border-soft:   #1e293b;
+    --sn-border-strong: #475569;
+  }
+}
+:root[data-theme="dark"] {
+  --sn-surface:       #0f172a;
+  --sn-surface-1:     #0b1220;
+  --sn-surface-2:     #1e293b;
+  --sn-surface-3:     #334155;
+  --sn-text-primary:   #e5e7eb;
+  --sn-text-secondary: #94a3b8;
+  --sn-text-tertiary:  #64748b;
+  --sn-border:        #334155;
+  --sn-border-soft:   #1e293b;
+  --sn-border-strong: #475569;
+}
+:root[data-theme="dark"] body,
+:root[data-theme="dark"] .app-main,
+:root[data-theme="dark"] .page { background: var(--sn-surface-1); color: var(--sn-text-primary); }

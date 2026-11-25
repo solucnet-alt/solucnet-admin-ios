@@ -1,0 +1,81 @@
+# SolucNet Admin · iPhone: compila en un Mac de GitHub, firma con la cuenta de Apple Developer y sube a TestFlight.
+# Se ejecuta a mano (Actions › Build iOS › Run workflow) o al subir cambios a la rama main.
+#
+# Secretos del repositorio (Settings › Secrets and variables › Actions):
+#   APPLE_TEAM_ID                 Team ID de la cuenta Apple Developer (10 caracteres)
+#   ASC_KEY_ID / ASC_ISSUER_ID    llave de App Store Connect API (Users and Access › Integrations › App Store Connect API, rol App Manager)
+#   ASC_KEY_P8                    contenido del archivo AuthKey_XXXX.p8 de esa llave
+#   GOOGLE_SERVICE_INFO_PLIST     GoogleService-Info.plist de Firebase (app iOS com.solucnet.admin) en base64 (opcional: sin él no hay push)
+name: Build iOS
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  ios:
+    runs-on: macos-14
+    env:
+      CON_APPLE: ${{ secrets.ASC_KEY_ID != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci || npm install
+      - name: Firebase (notificaciones)
+        env: { GSI: '${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}' }
+        run: |
+          if [ -n "$GSI" ]; then echo "$GSI" | base64 --decode > ios/App/App/GoogleService-Info.plist; else echo "Sin GoogleService-Info.plist: compila sin push"; fi
+      - run: npx cap sync ios
+      - run: ruby ios/scripts/configurar-xcode.rb
+      - run: cd ios/App && pod install --repo-update
+      # ---- Sin cuenta de Apple (secretos vacíos): compila SIN firmar y deja el .ipa en Artifacts (sirve para verificar
+      #      que todo compila; no se instala en un iPhone sin firmar, salvo con Sideloadly/AltStore y un Apple ID gratis: 7 días)
+      - name: Compilar sin firmar (sin cuenta de Apple)
+        if: env.CON_APPLE != 'true'
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Release -sdk iphoneos \
+            -archivePath $RUNNER_TEMP/App.xcarchive -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            MARKETING_VERSION=$VERSION CURRENT_PROJECT_VERSION=${{ github.run_number }} archive
+          mkdir -p $RUNNER_TEMP/ipa/Payload && cp -R $RUNNER_TEMP/App.xcarchive/Products/Applications/App.app $RUNNER_TEMP/ipa/Payload/
+          cd $RUNNER_TEMP/ipa && zip -qr SolucNetAdmin-sin-firmar.ipa Payload
+      - name: Guardar .ipa sin firmar
+        if: env.CON_APPLE != 'true'
+        uses: actions/upload-artifact@v4
+        with: { name: SolucNetAdmin-iOS-sin-firmar, path: '${{ runner.temp }}/ipa/SolucNetAdmin-sin-firmar.ipa' }
+
+      # ---- Con cuenta de Apple: firma y sube a TestFlight
+      - name: Llave de App Store Connect
+        if: env.CON_APPLE == 'true'
+        env: { P8: '${{ secrets.ASC_KEY_P8 }}' }
+        run: |
+          mkdir -p ~/private_keys && echo "$P8" > ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+      - name: Compilar y firmar
+        if: env.CON_APPLE == 'true'
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Release \
+            -archivePath $RUNNER_TEMP/App.xcarchive -destination 'generic/platform=iOS' \
+            -allowProvisioningUpdates -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
+            -authenticationKeyID ${{ secrets.ASC_KEY_ID }} -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }} \
+            DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} CODE_SIGN_STYLE=Automatic \
+            PRODUCT_BUNDLE_IDENTIFIER=com.solucnet.admin MARKETING_VERSION=$VERSION CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            archive
+      - name: Subir a TestFlight
+        if: env.CON_APPLE == 'true'
+        run: |
+          cat > $RUNNER_TEMP/ExportOptions.plist <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>${{ secrets.APPLE_TEAM_ID }}</string>
+            <key>signingStyle</key><string>automatic</string>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath $RUNNER_TEMP/App.xcarchive -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
+            -exportPath $RUNNER_TEMP/export -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
+            -authenticationKeyID ${{ secrets.ASC_KEY_ID }} -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }}

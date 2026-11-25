@@ -1,0 +1,94 @@
+/* ============================================================
+   SOLUCNET ADMIN — Librería de componentes (prefijo sn-)
+   2026-10-05. Reemplaza el estilado inline de las páginas.
+   Consume tokens de design-system.css + --brand de admin-theme.css.
+   ============================================================ */
+
+/* ---------- Tarjeta ---------- */
+.sn-card {
+  background: var(--sn-surface);
+  border: 1px solid var(--sn-border-soft);
+  border-radius: var(--sn-radius-lg);
+  box-shadow: var(--sn-elev-1);
+  padding: var(--sn-space-4);
+  margin-bottom: var(--sn-space-3);
+}
+.sn-card--accent { border-left: 4px solid var(--brand); }
+.sn-card--flush  { padding: 0; overflow: hidden; }
+
+/* ---------- Botones ---------- */
+.sn-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  min-height: var(--sn-touch-min);
+  padding: .55rem 1rem;
+  border: none; cursor: pointer;
+  border-radius: var(--sn-radius-md);
+  font-weight: var(--sn-weight-semibold);
+  font-size: var(--sn-text-sm);
+  line-height: 1.1;
+  background: var(--sn-surface-2); color: var(--sn-text-primary);
+  transition: transform var(--sn-duration-fast) var(--sn-easing-standard),
+              filter var(--sn-duration-fast) var(--sn-easing-standard);
+}
+.sn-btn:active { transform: scale(.97); }
+.sn-btn:disabled, .sn-btn.is-locked { opacity: .5; cursor: not-allowed; }
+.sn-btn--primary { background: var(--brand-grad); color: #fff; box-shadow: 0 4px 14px rgba(0,132,255,.25); }
+.sn-btn--ghost   { background: transparent; border: 1.5px solid var(--sn-border); color: var(--sn-text-secondary); }
+.sn-btn--danger  { background: var(--sn-danger); color: #fff; }
+.sn-btn--success { background: var(--sn-success); color: #fff; }
+.sn-btn--sm { min-height: 36px; padding: .35rem .7rem; font-size: var(--sn-text-xs); }
+.sn-btn--block { width: 100%; }
+
+/* ---------- Badges de estado (semánticos) ---------- */
+.sn-badge {
+  display: inline-flex; align-items: center; gap: .35em;
+  border-radius: var(--sn-radius-full);
+  padding: .28em .7em;
+  font-size: var(--sn-text-xs); font-weight: var(--sn-weight-semibold);
+  background: var(--sn-surface-2); color: var(--sn-text-secondary);
+}
+.sn-badge--ok    { background: var(--sn-green-100); color: var(--sn-green-800); }
+.sn-badge--warn  { background: var(--sn-state-pendiente-bg); color: var(--sn-state-pendiente-fg); }
+.sn-badge--info  { background: var(--brand-100); color: var(--brand-800); }
+.sn-badge--danger{ background: #fee2e2; color: #991b1b; }
+.sn-badge--off   { background: var(--sn-surface-2); color: var(--sn-text-tertiary); }
+
+/* ---------- Fila de lista ---------- */
+.sn-row {
+  display: flex; gap: var(--sn-space-3); align-items: center;
+  padding: var(--sn-space-3) var(--sn-space-4);
+  border-bottom: 1px solid var(--sn-border-soft);
+}
+.sn-row:last-child { border-bottom: none; }
+.sn-row__main { flex: 1; min-width: 0; }
+.sn-row__title { font-weight: var(--sn-weight-semibold); color: var(--sn-text-primary); }
+.sn-row__sub { font-size: var(--sn-text-xs); color: var(--sn-text-tertiary); }
+
+/* ---------- Título de sección ---------- */
+.sn-section-title {
+  font-size: var(--sn-text-sm); font-weight: var(--sn-weight-semibold);
+  color: var(--sn-text-secondary); text-transform: uppercase; letter-spacing: .04em;
+  margin: var(--sn-space-4) 0 var(--sn-space-2);
+}
+
+/* ---------- Stat tiles ---------- */
+.sn-stat {
+  background: var(--sn-surface);
+  border: 1px solid var(--sn-border-soft);
+  border-radius: var(--sn-radius-lg);
+  box-shadow: var(--sn-elev-1);
+  padding: var(--sn-space-4); text-align: center;
+}
+.sn-stat__num { font-size: var(--sn-text-xl); font-weight: var(--sn-weight-bold); color: var(--brand); line-height: 1.1; }
+.sn-stat__label { font-size: var(--sn-text-xs); color: var(--sn-text-tertiary); margin-top: 2px; }
+
+/* ---------- Grids ---------- */
+.sn-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sn-space-3); }
+.sn-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sn-space-2); }
+
+/* ---------- Estado vacío ---------- */
+.sn-empty {
+  text-align: center; color: var(--sn-text-tertiary);
+  padding: var(--sn-space-10) var(--sn-space-4);
+}
+.sn-empty i { font-size: 2.2rem; opacity: .4; display: block; margin-bottom: var(--sn-space-2); }

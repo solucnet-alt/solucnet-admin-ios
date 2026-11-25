@@ -1,0 +1,38 @@
+{
+    "name": "SolucNet Admin",
+    "short_name": "Admin",
+    "description": "Panel de administración SolucNet — chats, clientes, OLTs, inventario y visitas técnicas",
+    "start_url": "/mobile-admin/index.html",
+    "scope": "/mobile-admin/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#0084ff",
+    "theme_color": "#0084ff",
+    "lang": "es-CO",
+    "icons": [
+        {
+            "src": "/mobile-admin/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/mobile-admin/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Chats",
+            "short_name": "Chats",
+            "url": "/mobile-admin/app.html#chats"
+        },
+        {
+            "name": "Clientes",
+            "short_name": "Clientes",
+            "url": "/mobile-admin/app.html#clientes"
+        }
+    ]
+}
